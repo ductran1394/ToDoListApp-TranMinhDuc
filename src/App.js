@@ -1,17 +1,18 @@
-import logo from "./logo.svg";
 import {useReducer} from "react";
+
 import "./App.css";
 
 // 1. init state
 const initState = {
    job: "",
    jobs: [],
-   editToDO: {},
+   doneJobList: [],
 };
 
 // 2. Actions
 const SET_JOB = "set_job";
 const ADD_JOB = "add_job";
+const DONE_JOB = "done_job";
 const DELETE_JOB = "delete_job";
 const EDIT_JOB = "edit_job";
 
@@ -25,6 +26,13 @@ const setJob = (payload) => {
 const addJob = (payload) => {
    return {
       type: ADD_JOB,
+      payload,
+   };
+};
+
+const doneJob = (payload) => {
+   return {
+      type: DONE_JOB,
       payload,
    };
 };
@@ -62,6 +70,27 @@ const reducer = (state, action) => {
          };
          break;
 
+      case DONE_JOB:
+         let doneJobsListUpdate = [...state.doneJobList];
+
+         let chooseIndex = doneJobsListUpdate.includes(action.payload);
+
+         if (chooseIndex === false) {
+            // chưa có trong mảng
+            doneJobsListUpdate.push(action.payload);
+         } else {
+            let newDoneJobsListUpdate = doneJobsListUpdate.filter(
+               (job) => job !== action.payload
+            );
+            doneJobsListUpdate = newDoneJobsListUpdate;
+         }
+
+         newState = {
+            ...state,
+            doneJobList: doneJobsListUpdate,
+         };
+
+         break;
       case DELETE_JOB:
          const newJobs = [...state.jobs];
 
@@ -96,7 +125,7 @@ const reducer = (state, action) => {
 function App() {
    const [state, dispatch] = useReducer(reducer, initState);
 
-   const {job, jobs} = state;
+   const {job, jobs, doneJobList} = state;
 
    const handleSubmit = (e) => {
       e.preventDefault();
@@ -105,17 +134,17 @@ function App() {
    };
 
    return (
-      <div className="App">
-         <div>
+      <div className="app">
+         <div className="container">
             <header>
-               <h1>To do App</h1>
+               <h1>Todo App</h1>
                <form id="new-task-form">
                   <input
                      value={job}
                      type="text"
                      name="new-task-input"
                      id="new-task-input"
-                     placeholder="What do you have planned?"
+                     placeholder="Enter job"
                      onChange={(e) => {
                         dispatch(setJob(e.target.value));
                      }}
@@ -127,28 +156,51 @@ function App() {
             </header>
             <main>
                <section className="task-list">
-                  <h2>Tasks</h2>
                   <div id="tasks">
                      <div>
-                        {jobs.map((job, index) => (
-                           <div className="task" key={index}>
-                              <div className="content">{job}</div>
-                              <div className="actions">
-                                 <button
-                                    onClick={() =>
-                                       dispatch(editJob(job, index))
-                                    }
-                                    className="edit">
-                                    Edit
-                                 </button>
-                                 <button
-                                    onClick={() => dispatch(deleteJob(index))}
-                                    className="delete">
-                                    Delete
-                                 </button>
+                        {jobs.map((job, index) => {
+                           return (
+                              <div className="task" key={index}>
+                                 <div className="content">
+                                    <div
+                                       className={`${
+                                          doneJobList.includes(job) === true
+                                             ? "doneJob"
+                                             : ""
+                                       }`}>
+                                       {job}
+                                    </div>
+                                 </div>
+                                 <div className="actions">
+                                    <button
+                                       onClick={() => dispatch(doneJob(job))}
+                                       className="done">
+                                       {doneJobList.includes(job) ? (
+                                          <div style={{color: "crimson"}}>
+                                             Undo
+                                          </div>
+                                       ) : (
+                                          <div>Done</div>
+                                       )}
+                                    </button>
+                                    <button
+                                       onClick={() =>
+                                          dispatch(editJob(job, index))
+                                       }
+                                       className="edit">
+                                       Edit
+                                    </button>
+                                    <button
+                                       onClick={() =>
+                                          dispatch(deleteJob(index))
+                                       }
+                                       className="delete">
+                                       Delete
+                                    </button>
+                                 </div>
                               </div>
-                           </div>
-                        ))}
+                           );
+                        })}
                      </div>
                   </div>
                </section>
